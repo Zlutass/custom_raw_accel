@@ -1,0 +1,1935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Raw Accel Builder — Complete Edition</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #08080d;
+  --bg2: #0d0d14;
+  --card: #111118;
+  --card2: #16161f;
+  --accent: #7c3aed;
+  --accent2: #a855f7;
+  --accent3: #c084fc;
+  --green: #10b981;
+  --orange: #f59e0b;
+  --red: #ef4444;
+  --cyan: #06b6d4;
+  --text: #e2e8f0;
+  --text2: #94a3b8;
+  --text3: #64748b;
+  --border: #1e1e2e;
+  --border2: #252535;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+
+body {
+  font-family: 'Space Mono', monospace;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Noise overlay */
+body::before {
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;
+  z-index:0;
+  opacity:0.4;
+}
+
+.app {
+  position:relative;
+  z-index:1;
+  max-width:1400px;
+  margin:0 auto;
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+
+/* Header */
+.header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:16px 24px;
+  background: linear-gradient(135deg, #111118, #16161f);
+  border: 1px solid var(--border2);
+  border-radius:14px;
+  position:relative;
+  overflow:hidden;
+}
+.header::before {
+  content:'';
+  position:absolute;
+  left:0;top:0;bottom:0;
+  width:4px;
+  background: linear-gradient(180deg, var(--accent), var(--cyan));
+  border-radius:4px 0 0 4px;
+}
+.header-left { display:flex;flex-direction:column;gap:4px; }
+.header-title {
+  font-family:'Rajdhani',sans-serif;
+  font-size:24px;
+  font-weight:700;
+  letter-spacing:2px;
+  color:#fff;
+}
+.header-title span { color: var(--accent3); }
+.header-sub { font-size:10px;color:var(--text3);letter-spacing:2px; }
+.header-pills { display:flex;gap:8px;align-items:center; }
+.pill {
+  font-size:10px;letter-spacing:1px;
+  padding:4px 10px;border-radius:20px;
+  border:1px solid;
+}
+.pill-v { color:var(--green);border-color:var(--green);background:rgba(16,185,129,0.08); }
+.pill-a { color:var(--accent3);border-color:var(--accent);background:rgba(124,58,237,0.08); }
+
+/* Two-column main layout */
+.main-grid { display:grid;grid-template-columns:380px 1fr;gap:16px; }
+@media(max-width:960px){ .main-grid{grid-template-columns:1fr} }
+
+/* Cards */
+.card {
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+.card2 { background:var(--card2); border-color:var(--border2); }
+
+.stag {
+  font-size:9px;letter-spacing:3px;
+  color:var(--text3);
+  text-transform:uppercase;
+  display:flex;align-items:center;gap:8px;
+}
+.stag::after {
+  content:'';flex:1;
+  height:1px;background:var(--border2);
+}
+
+/* Tabs */
+.tabs { display:flex;gap:4px;background:var(--bg2);border-radius:10px;padding:4px; }
+.tab {
+  flex:1;text-align:center;padding:8px 4px;
+  font-size:11px;letter-spacing:1px;font-family:'Space Mono',monospace;
+  cursor:pointer;border-radius:7px;
+  color:var(--text3);transition:all .2s;border:none;background:transparent;
+}
+.tab.active { background:var(--accent);color:#fff;font-weight:700; }
+.tab:hover:not(.active) { color:var(--text2);background:var(--border); }
+
+.tab-panel { display:none; }
+.tab-panel.active { display:flex;flex-direction:column;gap:14px; }
+
+/* Fields */
+.field { display:flex;flex-direction:column;gap:6px; }
+.field label {
+  font-size:10px;color:var(--text3);letter-spacing:1.5px;
+  text-transform:uppercase;display:flex;align-items:center;gap:6px;
+}
+.field label .hint {
+  background:var(--border2);color:var(--text3);
+  border-radius:4px;padding:2px 6px;font-size:9px;cursor:help;
+}
+input[type=text],input[type=number],select {
+  background:#0a0a10;
+  border:1px solid var(--border2);
+  border-radius:8px;
+  color:var(--text);
+  padding:9px 12px;
+  font-family:'Space Mono',monospace;
+  font-size:13px;
+  transition:border-color .2s;
+  width:100%;
+}
+input:focus,select:focus { outline:none;border-color:var(--accent2); }
+select { cursor:pointer; }
+option { background:#111; }
+
+.igrid2 { display:grid;grid-template-columns:1fr 1fr;gap:12px; }
+.igrid3 { display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px; }
+
+/* Range sliders */
+.range-wrap { display:flex;flex-direction:column;gap:6px; }
+.range-header { display:flex;justify-content:space-between;align-items:center; }
+.range-name { font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase; }
+.range-val { font-size:14px;font-weight:700;color:var(--accent3); font-family:'Rajdhani',sans-serif; }
+input[type=range] {
+  -webkit-appearance:none;
+  width:100%;height:4px;border-radius:2px;outline:none;cursor:pointer;
+  background: linear-gradient(to right, var(--accent) 0%, var(--accent) var(--pct,50%), var(--border2) var(--pct,50%));
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance:none;
+  width:16px;height:16px;border-radius:50%;
+  background:var(--accent2);
+  border:2px solid #fff;
+  transition:transform .15s;
+}
+input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
+
+/* Sens display bar */
+.sens-bar {
+  display:grid;grid-template-columns:repeat(3,1fr);
+  border:1px solid var(--border2);border-radius:10px;overflow:hidden;
+}
+.sb-seg { padding:12px;text-align:center;background:#0a0a10; }
+.sb-seg:not(:last-child) { border-right:1px solid var(--border2); }
+.sb-label { font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px; }
+.sb-val { font-size:20px;font-weight:700;color:#fff;font-family:'Rajdhani',sans-serif; }
+.sb-unit { font-size:10px;color:var(--text3); }
+
+/* Tier badge */
+.tier-badge {
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 14px;border-radius:20px;font-size:11px;letter-spacing:1px;
+  font-weight:700;border:1px solid;
+}
+.tier-low  { color:var(--green);border-color:var(--green);background:rgba(16,185,129,0.1); }
+.tier-mid  { color:var(--accent3);border-color:var(--accent);background:rgba(124,58,237,0.1); }
+.tier-high { color:var(--orange);border-color:var(--orange);background:rgba(245,158,11,0.1); }
+.tier-dot { width:6px;height:6px;border-radius:50%;background:currentColor; }
+
+/* Curve type pills */
+.curve-types { display:grid;grid-template-columns:repeat(3,1fr);gap:8px; }
+.ct {
+  border:1px solid var(--border2);border-radius:8px;
+  padding:10px 6px;text-align:center;cursor:pointer;
+  transition:all .2s;
+}
+.ct:hover,.ct.sel { border-color:var(--accent);background:rgba(124,58,237,0.1); }
+.ct-icon { font-size:18px;margin-bottom:4px; }
+.ct-name { font-size:10px;letter-spacing:1px;color:var(--text2); }
+.ct.sel .ct-name { color:var(--accent3); }
+
+/* Preset cards */
+.preset-grid { display:grid;grid-template-columns:repeat(2,1fr);gap:8px; }
+.pcard {
+  border:1px solid var(--border2);border-radius:10px;
+  padding:12px;cursor:pointer;transition:all .2s;
+}
+.pcard:hover,.pcard.sel { border-color:var(--accent);background:rgba(124,58,237,0.08); }
+.pcard-name { font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px; }
+.pcard-desc { font-size:9px;color:var(--text3);letter-spacing:.5px; }
+.pcard.sel .pcard-name { color:var(--accent3); }
+.pcard-tag { font-size:8px;padding:2px 6px;border-radius:4px;display:inline-block;margin-top:4px; }
+
+/* Multiplier profile row */
+.mult-row { display:flex;gap:8px; }
+.mcard {
+  flex:1;border:1px solid var(--border2);border-radius:8px;
+  padding:8px;text-align:center;cursor:pointer;transition:all .2s;
+}
+.mcard:hover,.mcard.sel { border-color:var(--accent2);background:rgba(168,85,247,0.1); }
+.mcard-val { font-size:18px;font-weight:700;font-family:'Rajdhani',sans-serif;color:var(--accent3); }
+.mcard-name { font-size:8px;color:var(--text3);letter-spacing:1px; }
+
+/* Buttons */
+.btn-row { display:flex;gap:10px;flex-wrap:wrap; }
+.btn {
+  padding:10px 18px;border-radius:8px;
+  font-family:'Space Mono',monospace;font-size:11px;letter-spacing:1px;
+  cursor:pointer;border:1px solid;transition:all .2s;
+  display:flex;align-items:center;gap:6px;
+}
+.btn-primary { background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700; }
+.btn-primary:hover { background:var(--accent2);border-color:var(--accent2); }
+.btn-ghost { background:transparent;border-color:var(--border2);color:var(--text2); }
+.btn-ghost:hover { border-color:var(--text2);color:var(--text); }
+.btn-danger { background:transparent;border-color:rgba(239,68,68,0.4);color:var(--red); }
+.btn-danger:hover { background:rgba(239,68,68,0.1); }
+.btn-green { background:transparent;border-color:rgba(16,185,129,0.4);color:var(--green); }
+.btn-green:hover { background:rgba(16,185,129,0.1); }
+
+/* Chart */
+.chart-wrap {
+  position:relative;border:1px solid var(--border2);border-radius:10px;
+  background:#0a0a10;padding:12px;
+}
+.chart-legend { display:flex;gap:16px;flex-wrap:wrap;margin-top:10px; }
+.cl-item { display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2); }
+.cl-dot { width:12px;height:3px;border-radius:2px; }
+
+/* Config output */
+.cfg-grid { display:grid;grid-template-columns:1fr 1fr;gap:8px; }
+.cfg-row { display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#0a0a10;border-radius:6px;border:1px solid var(--border); }
+.cfg-key { font-size:11px;color:var(--text3); }
+.cfg-val { font-size:13px;font-weight:700;color:var(--accent3);font-family:'Rajdhani',sans-serif; }
+
+/* Code export */
+.code-block {
+  background:#050508;border:1px solid var(--border2);border-radius:8px;
+  padding:16px;font-size:11px;line-height:1.8;white-space:pre;overflow-x:auto;
+  color:#a0a0c0;
+}
+.code-block .c { color:var(--text3); }
+.code-block .k { color:var(--accent3); }
+.code-block .v { color:var(--green); }
+
+/* Sens converter */
+.convert-arrow {
+  text-align:center;color:var(--text3);font-size:20px;padding:4px 0;
+}
+.result-box {
+  background:#0a0a10;border:1px solid var(--border2);border-radius:8px;
+  padding:14px;display:flex;justify-content:space-between;align-items:center;
+}
+.result-label { font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase; }
+.result-value { font-size:24px;font-weight:700;font-family:'Rajdhani',sans-serif;color:#fff; }
+
+/* Profile manager */
+.saved-list { display:flex;flex-direction:column;gap:8px; }
+.saved-item {
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;background:#0a0a10;border:1px solid var(--border2);border-radius:8px;
+}
+.saved-name { font-size:12px;font-weight:700;color:var(--text); }
+.saved-meta { font-size:10px;color:var(--text3); }
+.saved-actions { display:flex;gap:6px; }
+.icon-btn { background:transparent;border:1px solid var(--border2);border-radius:6px;padding:5px 9px;cursor:pointer;color:var(--text2);font-size:11px;transition:all .2s; }
+.icon-btn:hover { border-color:var(--text2);color:var(--text); }
+.icon-btn.del:hover { border-color:var(--red);color:var(--red); }
+
+/* Compare */
+.compare-grid { display:grid;grid-template-columns:1fr 1fr;gap:12px; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background:var(--bg2); }
+::-webkit-scrollbar-thumb { background:var(--border2);border-radius:3px; }
+
+/* Notification */
+.notif {
+  position:fixed;bottom:24px;right:24px;z-index:100;
+  background:var(--card2);border:1px solid var(--border2);border-radius:10px;
+  padding:12px 18px;font-size:12px;color:var(--text);
+  display:flex;align-items:center;gap:10px;
+  transform:translateY(80px);opacity:0;transition:all .3s;
+  pointer-events:none;
+}
+.notif.show { transform:translateY(0);opacity:1; }
+.notif-dot { width:8px;height:8px;border-radius:50%;background:var(--green); }
+
+/* What-is panel */
+.info-box {
+  background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.2);
+  border-radius:8px;padding:14px;font-size:11px;line-height:1.7;color:var(--text2);
+}
+.info-box strong { color:var(--accent3); }
+
+/* Sensitivity warning */
+.warn-badge {
+  display:inline-flex;gap:6px;align-items:center;
+  padding:5px 10px;border-radius:6px;font-size:10px;letter-spacing:1px;
+  background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:var(--orange);
+}
+
+/* Overlay crosshair */
+.xhair-row { display:flex;gap:10px;align-items:center;margin-top:8px; }
+.xhair-box {
+  width:80px;height:80px;background:#0a0a10;border:1px solid var(--border2);
+  border-radius:8px;display:flex;align-items:center;justify-content:center;
+  position:relative;flex-shrink:0;
+}
+.xhair-inner { position:relative; }
+
+/* Scrollable panel */
+.right-col { display:flex;flex-direction:column;gap:16px; overflow:visible; }
+
+/* Tracker zone active */
+#tracker-zone.active { border-color:var(--accent2);border-style:solid; }
+#tracker-zone.active #tracker-hint { display:none; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="header-title">RAW<span>ACCEL</span> BUILDER</div>
+    <div class="header-sub">Complete Edition — Natural / Linear / Classic / Power / Motivity</div>
+  </div>
+  <div class="header-pills">
+    <span class="pill pill-v">Valorant</span>
+    <span class="pill pill-a">CS2</span>
+    <span class="pill pill-a">Apex</span>
+    <span class="pill pill-a">+ More</span>
+  </div>
+</div>
+
+<!-- MAIN GRID -->
+<div class="main-grid">
+
+  <!-- LEFT COLUMN -->
+  <div style="display:flex;flex-direction:column;gap:16px;">
+
+    <!-- Base Setup -->
+    <div class="card">
+      <div class="stag">Base Setup</div>
+      <div class="igrid2">
+        <div class="field">
+          <label>DPI <span class="hint" title="Mouse hardware DPI">?</span></label>
+          <select id="dpi" onchange="onInput()">
+            <option value="200">200</option>
+            <option value="400">400</option>
+            <option value="800">800</option>
+            <option value="1000">1000</option>
+            <option value="1200">1200</option>
+            <option value="1600" selected>1600</option>
+            <option value="3200">3200</option>
+            <option value="6400">6400</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>In-game Sens</label>
+          <input type="number" id="sens" value="0.18" step="0.001" min="0.001" oninput="onInput()">
+        </div>
+        <div class="field">
+          <label>Game</label>
+          <select id="game" onchange="onInput()">
+            <option value="val">Valorant (0.07°/ct)</option>
+            <option value="cs2">CS2 (0.022°/ct)</option>
+            <option value="apex">Apex Legends (0.022°/ct)</option>
+            <option value="ow2">Overwatch 2 (0.0066°/ct)</option>
+            <option value="r6">Rainbow Six Siege</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Polling Rate (Hz)</label>
+          <select id="polling" onchange="onInput()">
+            <option value="125">125 Hz</option>
+            <option value="250">250 Hz</option>
+            <option value="500">500 Hz</option>
+            <option value="1000" selected>1000 Hz</option>
+            <option value="2000">2000 Hz</option>
+            <option value="4000">4000 Hz</option>
+            <option value="8000">8000 Hz</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="sens-bar">
+        <div class="sb-seg">
+          <div class="sb-label">Sensitivity</div>
+          <div class="sb-val" id="disp-sens">0.180</div>
+          <div class="sb-unit">in-game</div>
+        </div>
+        <div class="sb-seg">
+          <div class="sb-label">DPI</div>
+          <div class="sb-val" id="disp-dpi">1600</div>
+          <div class="sb-unit">counts/in</div>
+        </div>
+        <div class="sb-seg">
+          <div class="sb-label">eDPI</div>
+          <div class="sb-val" id="disp-edpi">288</div>
+          <div class="sb-unit">effective</div>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div id="tier-badge" class="tier-badge tier-mid"><span class="tier-dot"></span>MID SENS — curve auto-tuned</div>
+        <div id="cm360" style="font-size:11px;color:var(--text3)">≈ <span id="cm360-val" style="color:var(--accent3)">57.6</span> cm/360°</div>
+      </div>
+    </div>
+
+    <!-- Curve Type -->
+    <div class="card">
+      <div class="stag">Acceleration Type</div>
+      <div class="curve-types">
+        <div class="ct sel" data-type="natural" onclick="selectType(this)">
+          <div class="ct-icon">〜</div><div class="ct-name">NATURAL</div>
+        </div>
+        <div class="ct" data-type="linear" onclick="selectType(this)">
+          <div class="ct-icon">╱</div><div class="ct-name">LINEAR</div>
+        </div>
+        <div class="ct" data-type="classic" onclick="selectType(this)">
+          <div class="ct-icon">⌒</div><div class="ct-name">CLASSIC</div>
+        </div>
+        <div class="ct" data-type="power" onclick="selectType(this)">
+          <div class="ct-icon">↗</div><div class="ct-name">POWER</div>
+        </div>
+        <div class="ct" data-type="motivity" onclick="selectType(this)">
+          <div class="ct-icon">≋</div><div class="ct-name">MOTIVITY</div>
+        </div>
+        <div class="ct" data-type="off" onclick="selectType(this)">
+          <div class="ct-icon">—</div><div class="ct-name">NONE</div>
+        </div>
+      </div>
+      <div id="type-info" class="info-box"></div>
+    </div>
+
+    <!-- Preset Style -->
+    <div class="card">
+      <div class="stag">Play Style Preset</div>
+      <div class="preset-grid">
+        <div class="pcard" data-preset="gentle" onclick="selectPreset(this)">
+          <div class="pcard-name">🎯 Gentle Tracking</div>
+          <div class="pcard-desc">Slow build, high control — snipers & low sens</div>
+          <span class="pcard-tag" style="background:rgba(16,185,129,0.1);color:var(--green)">Entry / AWP</span>
+        </div>
+        <div class="pcard sel" data-preset="natural" onclick="selectPreset(this)">
+          <div class="pcard-name">⚖️ Natural Balanced</div>
+          <div class="pcard-desc">Balanced ramp — works for all roles</div>
+          <span class="pcard-tag" style="background:rgba(124,58,237,0.1);color:var(--accent3)">Universal</span>
+        </div>
+        <div class="pcard" data-preset="flick" onclick="selectPreset(this)">
+          <div class="pcard-name">⚡ Flick-Oriented</div>
+          <div class="pcard-desc">Fast ramp, high limit — duelists & riflers</div>
+          <span class="pcard-tag" style="background:rgba(245,158,11,0.1);color:var(--orange)">Aggressive</span>
+        </div>
+        <div class="pcard" data-preset="pro" onclick="selectPreset(this)">
+          <div class="pcard-name">🏆 Pro-Grade</div>
+          <div class="pcard-desc">Micro-accel only — feels nearly linear</div>
+          <span class="pcard-tag" style="background:rgba(6,182,212,0.1);color:var(--cyan)">Competitive</span>
+        </div>
+        <div class="pcard" data-preset="speed" onclick="selectPreset(this)">
+          <div class="pcard-name">🚀 Speed Player</div>
+          <div class="pcard-desc">High limit, fast activation — ADHD mode</div>
+          <span class="pcard-tag" style="background:rgba(239,68,68,0.1);color:var(--red)">Extreme</span>
+        </div>
+        <div class="pcard" data-preset="custom" onclick="selectPreset(this)">
+          <div class="pcard-name">🔧 Custom</div>
+          <div class="pcard-desc">You control every parameter below</div>
+          <span class="pcard-tag" style="background:var(--border);color:var(--text3)">Manual</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Parameters -->
+    <div class="card">
+      <div class="stag">Parameters</div>
+
+      <!-- Sens Multiplier profiles -->
+      <div>
+        <div class="stag" style="margin-bottom:10px">Sens Multiplier</div>
+        <div class="mult-row" id="mult-cards"></div>
+      </div>
+
+      <!-- Main sliders -->
+      <div id="param-sliders" style="display:flex;flex-direction:column;gap:14px;"></div>
+
+      <!-- Advanced toggle -->
+      <div style="border-top:1px solid var(--border2);padding-top:14px;">
+        <div class="stag" style="cursor:pointer;" onclick="toggleAdv()" id="adv-label">Advanced ▶</div>
+        <div id="adv-section" style="display:none;margin-top:14px;flex-direction:column;gap:14px;">
+          <div class="igrid2">
+            <div class="range-wrap">
+              <div class="range-header"><span class="range-name">Y/X Ratio</span><span class="range-val" id="val-ratio">1.00</span></div>
+              <input type="range" id="ratio" min="0.5" max="1.5" step="0.01" value="1.00" oninput="onInput()">
+            </div>
+            <div class="range-wrap">
+              <div class="range-header"><span class="range-name">Rotation (°)</span><span class="range-val" id="val-rot">0.0</span></div>
+              <input type="range" id="rot" min="-30" max="30" step="0.5" value="0" oninput="onInput()">
+            </div>
+          </div>
+          <div class="igrid2">
+            <div class="field">
+              <label>Gain (smooth near limit)</label>
+              <select id="gain" onchange="onInput()">
+                <option value="1">On (recommended)</option>
+                <option value="0">Off</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Output Cap (max mult)</label>
+              <input type="number" id="cap" min="0" max="10" step="0.1" value="0" placeholder="0 = off" oninput="onInput()">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div class="right-col">
+
+    <!-- Tab switcher -->
+    <div class="card" style="gap:12px;">
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('chart',this)">Curve</button>
+        <button class="tab" onclick="switchTab('tracker',this)">Tracker</button>
+        <button class="tab" onclick="switchTab('config',this)">Config</button>
+        <button class="tab" onclick="switchTab('compare',this)">Compare</button>
+        <button class="tab" onclick="switchTab('convert',this)">Converter</button>
+        <button class="tab" onclick="switchTab('profiles',this)">Profiles</button>
+        <button class="tab" onclick="switchTab('guide',this)">Guide</button>
+      </div>
+
+      <!-- CHART TAB -->
+      <div id="tab-chart" class="tab-panel active">
+        <div class="chart-wrap">
+          <canvas id="mainChart" height="280"></canvas>
+        </div>
+        <div class="chart-legend">
+          <div class="cl-item"><div class="cl-dot" style="background:#a855f7"></div>Accel Curve</div>
+          <div class="cl-item"><div class="cl-dot" style="background:#10b981;border-top:2px dashed"></div>Baseline (1.0×)</div>
+          <div class="cl-item"><div class="cl-dot" style="background:#ef4444;border-top:2px dashed"></div>Limit / Cap</div>
+          <div class="cl-item"><div class="cl-dot" style="background:#06b6d4;border-top:2px dotted"></div>Sensitivity × mult</div>
+        </div>
+
+        <div style="margin-top:14px;">
+          <div class="stag">Live Metrics</div>
+          <div class="cfg-grid" style="margin-top:10px;" id="live-metrics"></div>
+        </div>
+
+        <div class="btn-row" style="margin-top:14px;">
+          <button class="btn btn-primary" onclick="copyConfig()">📋 Copy Raw Accel Config</button>
+          <button class="btn btn-ghost" onclick="saveProfile()">💾 Save Profile</button>
+          <button class="btn btn-ghost" onclick="resetAll()">↺ Reset</button>
+        </div>
+      </div>
+
+      <!-- TRACKER TAB -->
+      <div id="tab-tracker" class="tab-panel">
+        <div class="stag">Mouse Movement Tracker</div>
+        <div class="info-box" style="margin-bottom:12px;font-size:11px;">
+          Move your mouse naturally inside the box below — slow micro-aim, tracking, and fast flicks. The tracker records your real speed distribution and overlays it on your curve so you can tune it to your actual playstyle.
+        </div>
+
+        <div id="tracker-zone" style="
+          width:100%;height:220px;
+          background:#050508;
+          border:2px dashed var(--border2);
+          border-radius:12px;
+          cursor:crosshair;
+          position:relative;
+          overflow:hidden;
+          display:flex;align-items:center;justify-content:center;
+        ">
+          <canvas id="tracker-canvas" style="position:absolute;inset:0;width:100%;height:100%;"></canvas>
+          <div id="tracker-hint" style="font-size:12px;color:var(--text3);letter-spacing:1px;pointer-events:none;z-index:2;text-align:center;">
+            MOVE MOUSE HERE<br><span style="font-size:10px;color:var(--text3);">slow tracking · micro-adjustments · fast flicks</span>
+          </div>
+          <div id="tracker-dot" style="position:absolute;width:8px;height:8px;border-radius:50%;background:var(--accent2);transform:translate(-50%,-50%);pointer-events:none;display:none;z-index:3;transition:background 0.05s;"></div>
+        </div>
+
+        <!-- Speed stats row -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;">
+          <div style="background:#0a0a10;border:1px solid var(--border2);border-radius:8px;padding:10px;text-align:center;">
+            <div style="font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;">Avg Speed</div>
+            <div id="tr-avg" style="font-size:18px;font-weight:700;color:var(--accent3);font-family:'Rajdhani',sans-serif;">—</div>
+            <div style="font-size:9px;color:var(--text3);">cts/ms</div>
+          </div>
+          <div style="background:#0a0a10;border:1px solid var(--border2);border-radius:8px;padding:10px;text-align:center;">
+            <div style="font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;">Peak Speed</div>
+            <div id="tr-peak" style="font-size:18px;font-weight:700;color:var(--orange);font-family:'Rajdhani',sans-serif;">—</div>
+            <div style="font-size:9px;color:var(--text3);">cts/ms</div>
+          </div>
+          <div style="background:#0a0a10;border:1px solid var(--border2);border-radius:8px;padding:10px;text-align:center;">
+            <div style="font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;">Samples</div>
+            <div id="tr-samples" style="font-size:18px;font-weight:700;color:var(--cyan);font-family:'Rajdhani',sans-serif;">0</div>
+            <div style="font-size:9px;color:var(--text3);">movements</div>
+          </div>
+          <div style="background:#0a0a10;border:1px solid var(--border2);border-radius:8px;padding:10px;text-align:center;">
+            <div style="font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;">Live Speed</div>
+            <div id="tr-live" style="font-size:18px;font-weight:700;color:var(--green);font-family:'Rajdhani',sans-serif;">0</div>
+            <div style="font-size:9px;color:var(--text3);">cts/ms</div>
+          </div>
+        </div>
+
+        <!-- Speed histogram -->
+        <div style="margin-top:14px;">
+          <div class="stag">Speed Distribution — overlaid on your curve</div>
+          <div class="chart-wrap" style="margin-top:10px;">
+            <canvas id="tracker-hist" height="200"></canvas>
+          </div>
+          <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);">
+              <div style="width:12px;height:3px;background:#a855f7;border-radius:2px;"></div>Accel curve
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);">
+              <div style="width:12px;height:10px;background:rgba(6,182,212,0.35);border-radius:2px;"></div>Your speed distribution
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);">
+              <div style="width:12px;height:3px;background:#f59e0b;border-radius:2px;border-top:2px dashed #f59e0b;"></div>Avg speed
+            </div>
+          </div>
+        </div>
+
+        <!-- Suggestion box -->
+        <div id="tracker-suggestion" style="display:none;margin-top:14px;">
+          <div class="stag">Curve Suggestion — based on your movement</div>
+          <div id="suggestion-content" class="info-box" style="margin-top:10px;"></div>
+          <div class="btn-row" style="margin-top:10px;">
+            <button class="btn btn-primary" id="apply-suggestion-btn" onclick="applyTrackerSuggestion()">Apply Suggested Curve</button>
+            <button class="btn btn-ghost" onclick="clearTracker()">Clear & Retry</button>
+          </div>
+        </div>
+
+        <div class="btn-row" style="margin-top:12px;" id="tracker-clear-row">
+          <button class="btn btn-ghost" onclick="clearTracker()">Clear Data</button>
+        </div>
+      </div>
+
+      <!-- CONFIG TAB -->
+      <div id="tab-config" class="tab-panel">
+        <div class="stag">Raw Accel INI Output</div>
+        <div class="code-block" id="config-output"></div>
+        <div class="btn-row" style="margin-top:12px;">
+          <button class="btn btn-primary" onclick="copyConfig()">📋 Copy Config</button>
+          <button class="btn btn-green" onclick="downloadConfig()">⬇ Download .ini</button>
+        </div>
+
+        <div class="stag" style="margin-top:16px;">JSON Export (for scripts)</div>
+        <div class="code-block" id="json-output" style="max-height:200px;overflow-y:auto;"></div>
+        <div class="btn-row" style="margin-top:8px;">
+          <button class="btn btn-ghost" onclick="copyJSON()">📋 Copy JSON</button>
+          <button class="btn btn-green" onclick="downloadJSON()">⬇ Download .json</button>
+        </div>
+      </div>
+
+      <!-- COMPARE TAB -->
+      <div id="tab-compare" class="tab-panel">
+        <div class="stag">Compare Two Curves</div>
+        <div class="compare-grid">
+          <div>
+            <div style="font-size:11px;color:var(--accent3);margin-bottom:8px;letter-spacing:1px;">CURVE A — Current</div>
+            <div id="compare-a" style="font-size:11px;color:var(--text3);line-height:2;"></div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--cyan);margin-bottom:8px;letter-spacing:1px;">CURVE B — Snapshot</div>
+            <div id="compare-b" style="font-size:11px;color:var(--text3);line-height:2;"></div>
+          </div>
+        </div>
+        <div class="btn-row" style="margin-top:12px;">
+          <button class="btn btn-ghost" onclick="takeSnapshotB()">📸 Snapshot Current as B</button>
+        </div>
+        <div class="chart-wrap" style="margin-top:14px;">
+          <canvas id="compareChart" height="220"></canvas>
+        </div>
+      </div>
+
+      <!-- CONVERTER TAB -->
+      <div id="tab-convert" class="tab-panel">
+        <div class="stag">Sensitivity Converter</div>
+        <div class="igrid2">
+          <div class="field">
+            <label>From Game</label>
+            <select id="conv-from" onchange="doConvert()">
+              <option value="val">Valorant</option>
+              <option value="cs2">CS2</option>
+              <option value="apex">Apex Legends</option>
+              <option value="ow2">Overwatch 2</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>To Game</label>
+            <select id="conv-to" onchange="doConvert()">
+              <option value="cs2">CS2</option>
+              <option value="val">Valorant</option>
+              <option value="apex">Apex Legends</option>
+              <option value="ow2">Overwatch 2</option>
+            </select>
+          </div>
+        </div>
+        <div class="field" style="margin-top:8px;">
+          <label>Input Sensitivity</label>
+          <input type="number" id="conv-sens" value="0.18" step="0.001" oninput="doConvert()">
+        </div>
+        <div class="field">
+          <label>DPI</label>
+          <select id="conv-dpi" onchange="doConvert()">
+            <option value="400">400</option>
+            <option value="800">800</option>
+            <option value="1000">1000</option>
+            <option value="1600" selected>1600</option>
+            <option value="3200">3200</option>
+          </select>
+        </div>
+
+        <div class="result-box" style="margin-top:12px;">
+          <div>
+            <div class="result-label">Converted Sensitivity</div>
+            <div class="result-value" id="conv-result">—</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="result-label">cm/360°</div>
+            <div class="result-value" id="conv-cm">—</div>
+          </div>
+        </div>
+
+        <div class="stag" style="margin-top:16px;">eDPI ↔ Sens Breakdown</div>
+        <div class="igrid2" style="margin-top:8px;">
+          <div class="field">
+            <label>Target eDPI</label>
+            <input type="number" id="target-edpi" value="400" step="1" oninput="calcFromEdpi()">
+          </div>
+          <div class="field">
+            <label>At DPI</label>
+            <select id="edpi-dpi" onchange="calcFromEdpi()">
+              <option value="400">400</option>
+              <option value="800">800</option>
+              <option value="1600" selected>1600</option>
+              <option value="3200">3200</option>
+            </select>
+          </div>
+        </div>
+        <div class="result-box" style="margin-top:8px;">
+          <div>
+            <div class="result-label">Required In-game Sens</div>
+            <div class="result-value" id="edpi-result">0.25</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="result-label">Verification eDPI</div>
+            <div class="result-value" id="edpi-verify">400</div>
+          </div>
+        </div>
+
+        <div class="stag" style="margin-top:16px;">DPI Equivalence</div>
+        <div class="igrid2" style="margin-top:8px;">
+          <div class="field">
+            <label>Current DPI</label>
+            <select id="dpi-from" onchange="calcDpiEq()">
+              <option value="400">400</option>
+              <option value="800">800</option>
+              <option value="1600" selected>1600</option>
+              <option value="3200">3200</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Target DPI</label>
+            <select id="dpi-to" onchange="calcDpiEq()">
+              <option value="400">400</option>
+              <option value="800" selected>800</option>
+              <option value="1600">1600</option>
+              <option value="3200">3200</option>
+            </select>
+          </div>
+        </div>
+        <div class="field" style="margin-top:6px;">
+          <label>Current Sens</label>
+          <input type="number" id="dpi-sens" value="0.18" step="0.001" oninput="calcDpiEq()">
+        </div>
+        <div class="result-box" style="margin-top:8px;">
+          <div>
+            <div class="result-label">New Sens at Target DPI</div>
+            <div class="result-value" id="dpi-result">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROFILES TAB -->
+      <div id="tab-profiles" class="tab-panel">
+        <div class="stag">Saved Profiles</div>
+        <div id="profile-list" class="saved-list">
+          <div style="font-size:11px;color:var(--text3);text-align:center;padding:20px;">No saved profiles yet.<br>Set up your curve and click Save Profile.</div>
+        </div>
+
+        <div style="border-top:1px solid var(--border2);padding-top:14px;margin-top:8px;">
+          <div class="stag">Save Current</div>
+          <div class="igrid2" style="margin-top:10px;">
+            <div class="field" style="grid-column:span 2;">
+              <label>Profile Name</label>
+              <input type="text" id="profile-name" placeholder="e.g. Ranked Valorant — Main" maxlength="40">
+            </div>
+          </div>
+          <div class="btn-row" style="margin-top:10px;">
+            <button class="btn btn-primary" onclick="saveProfile()">💾 Save Profile</button>
+            <button class="btn btn-danger" onclick="clearProfiles()">🗑 Clear All</button>
+          </div>
+        </div>
+
+        <div style="border-top:1px solid var(--border2);padding-top:14px;margin-top:8px;">
+          <div class="stag">Import / Export All</div>
+          <div class="btn-row" style="margin-top:10px;">
+            <button class="btn btn-ghost" onclick="exportProfiles()">⬆ Export JSON</button>
+            <button class="btn btn-ghost" onclick="importProfiles()">⬇ Import JSON</button>
+          </div>
+          <input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)">
+        </div>
+      </div>
+
+      <!-- GUIDE TAB -->
+      <div id="tab-guide" class="tab-panel">
+        <div class="stag">Understanding Raw Accel — Natural Mode</div>
+
+        <div class="info-box" style="margin-bottom:10px;">
+          <strong>What is Raw Accel?</strong><br>
+          Raw Accel is a Windows kernel-level driver that applies a custom acceleration curve to your raw mouse input before any game sees it. It works with any game, any DPI, and cannot be detected as cheating because it operates at the OS level.
+        </div>
+
+        <div class="stag">Parameter Reference</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+          <div class="cfg-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
+            <span style="color:var(--accent3);font-weight:700;font-size:12px;">Sens Multiplier</span>
+            <span style="font-size:11px;color:var(--text2);">Global speed scale. 1.0 = no change. This is applied after the accel curve. Start here to set your baseline feel.</span>
+          </div>
+          <div class="cfg-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
+            <span style="color:var(--accent3);font-weight:700;font-size:12px;">Decay Rate</span>
+            <span style="font-size:11px;color:var(--text2);">How quickly the curve rises toward the limit. Higher = faster ramp. Lower = gradual, more control-friendly. Range: 0.01–0.40.</span>
+          </div>
+          <div class="cfg-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
+            <span style="color:var(--accent3);font-weight:700;font-size:12px;">Input Offset</span>
+            <span style="font-size:11px;color:var(--text2);">Dead zone before acceleration begins. Higher offset = slow movements feel completely unaccelerated. Useful for micro-adjustments.</span>
+          </div>
+          <div class="cfg-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
+            <span style="color:var(--accent3);font-weight:700;font-size:12px;">Limit</span>
+            <span style="font-size:11px;color:var(--text2);">Maximum multiplier cap. The curve asymptotically approaches this value. 2.0 = fast flick is 2× your slow sensitivity.</span>
+          </div>
+          <div class="cfg-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
+            <span style="color:var(--accent3);font-weight:700;font-size:12px;">Gain</span>
+            <span style="font-size:11px;color:var(--text2);">When ON, smooths the acceleration near the limit so there's no abrupt cap. Recommended for most users.</span>
+          </div>
+          <div class="cfg-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
+            <span style="color:var(--accent3);font-weight:700;font-size:12px;">Y/X Ratio</span>
+            <span style="font-size:11px;color:var(--text2);">Scales vertical vs horizontal sensitivity. Use 0.85–0.95 to reduce vertical flicking if you have wrist deviation.</span>
+          </div>
+          <div class="cfg-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
+            <span style="color:var(--accent3);font-weight:700;font-size:12px;">Rotation</span>
+            <span style="font-size:11px;color:var(--text2);">Rotates the input vector. Compensates for mousepad angle or forearm alignment. ±5° is usually enough.</span>
+          </div>
+        </div>
+
+        <div class="stag" style="margin-top:14px;">eDPI Tier Guide (Valorant)</div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px;">
+          <div class="cfg-row">
+            <span class="cfg-key">Low Sens</span>
+            <span class="tier-low" style="padding:2px 8px;font-size:10px;border-radius:4px;">Below 250 eDPI</span>
+          </div>
+          <div class="cfg-row">
+            <span class="cfg-key">Mid Sens</span>
+            <span class="tier-mid" style="padding:2px 8px;font-size:10px;border-radius:4px;">250–350 eDPI</span>
+          </div>
+          <div class="cfg-row">
+            <span class="cfg-key">High Sens</span>
+            <span class="tier-high" style="padding:2px 8px;font-size:10px;border-radius:4px;">Above 350 eDPI</span>
+          </div>
+        </div>
+
+        <div class="stag" style="margin-top:14px;">Recommended Workflow</div>
+        <div class="info-box" style="font-size:11px;line-height:1.9;">
+          1. Set your DPI and current in-game sens above.<br>
+          2. Pick the play style that fits your role.<br>
+          3. The tool auto-tunes decay / offset / limit for your sens tier.<br>
+          4. Use the Curve tab to visualize exactly what will happen.<br>
+          5. Copy the config and paste it into Raw Accel.<br>
+          6. Test in aim trainers (KovaaK's / Aimlabs) before ranked.
+        </div>
+
+        <div class="stag" style="margin-top:14px;">Curve Type Comparison</div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px;font-size:11px;color:var(--text2);line-height:1.8;">
+          <div><strong style="color:var(--accent3)">Natural</strong> — Exponential approach to limit. Smoothest feeling, most popular. Best all-rounder.</div>
+          <div><strong style="color:var(--accent3)">Linear</strong> — Constant gain per speed unit. Very predictable. Good for CS2 veterans.</div>
+          <div><strong style="color:var(--accent3)">Classic</strong> — Old-school quake-style power curve. High ceiling, less control at low speeds.</div>
+          <div><strong style="color:var(--accent3)">Power</strong> — Exponential power law. Very aggressive at high speeds. Not recommended for beginners.</div>
+          <div><strong style="color:var(--accent3)">Motivity</strong> — Combines offset + natural. Best micro-precision + flick power balance.</div>
+        </div>
+      </div>
+
+    </div><!-- end card -->
+  </div><!-- end right col -->
+</div><!-- end main-grid -->
+
+</div><!-- end app -->
+
+<!-- Notification -->
+<div class="notif" id="notif"><span class="notif-dot"></span><span id="notif-msg">Copied!</span></div>
+
+<script>
+// ────── GAME MULTIPLIERS (sens unit → °/count) ──────
+const GAME_MULT = {
+  val:  0.07,
+  cs2:  0.022,
+  apex: 0.022,
+  ow2:  0.0066,
+  r6:   0.09,
+  other:0.07
+};
+
+// ────── TIER THRESHOLDS (Valorant eDPI community data) ──────
+const TIER = { low: 250, mid: 350 };
+
+// ────── PRESET DEFINITIONS ──────
+const PRESETS = {
+  gentle:  { mult:1.00, decay:0.05, offset:10, limit:1.55, gain:1 },
+  natural: { mult:1.00, decay:0.10, offset:4,  limit:2.00, gain:1 },
+  flick:   { mult:1.00, decay:0.16, offset:2,  limit:2.60, gain:1 },
+  pro:     { mult:1.00, decay:0.04, offset:12, limit:1.35, gain:1 },
+  speed:   { mult:1.00, decay:0.25, offset:0,  limit:3.40, gain:0 },
+  custom:  null
+};
+
+// Tier adjustment applied on top of preset
+const TIER_ADJ = {
+  low:  { limit:+0.30, decay:-0.02, offset:+3 },
+  mid:  { limit: 0,    decay: 0,    offset: 0 },
+  high: { limit:-0.35, decay:+0.03, offset:-2 }
+};
+
+// ────── CURVE TYPE INFO ──────
+const TYPE_INFO = {
+  natural:  '<strong>Natural</strong> — exponential approach to limit. Formula: 1 + (Limit−1)×(1−e^(−decay×v)). Smoothest, most recommended.',
+  linear:   '<strong>Linear</strong> — constant gain per input speed unit. Predictable, great for CS2 veterans. Formula: 1 + accel × max(0, speed−offset).',
+  classic:  '<strong>Classic</strong> — power-law curve (Quake style). Formula: (speed/sens)^power × sens. High ceiling, less control.',
+  power:    '<strong>Power</strong> — pure exponential power. Very aggressive at flick speeds. Use conservatively.',
+  motivity: '<strong>Motivity</strong> — blends flat zone (offset) + natural ramp + hard cap. Best for precision + flick balance.',
+  off:      '<strong>No Acceleration</strong> — Raw Accel passes through with only sens multiplier, Y/X ratio, and rotation applied.'
+};
+
+// ────── STATE ──────
+let state = {
+  dpi:1600, sens:0.18, game:'val', polling:1000,
+  type:'natural', preset:'natural',
+  mult:1.00, decay:0.10, offset:4, limit:2.00, gain:1, ratio:1.00, rot:0, cap:0,
+  advOpen:false
+};
+
+let snapshotB = null;
+let savedProfiles = JSON.parse(localStorage.getItem('ra_profiles') || '[]');
+
+let mainChart, cmpChart;
+
+// ────── SLIDER CONFIGS PER TYPE ──────
+function getSliderDefs(type) {
+  const base = [
+    { id:'mult',   label:'Sens Multiplier', min:0.5,  max:1.6,  step:0.01, default:1.00 },
+    { id:'decay',  label:'Decay Rate',      min:0.01, max:0.40, step:0.01, default:0.10 },
+    { id:'offset', label:'Input Offset',    min:0,    max:30,   step:0.5,  default:4    },
+    { id:'limit',  label:'Limit (max mult)',min:1.1,  max:4.0,  step:0.05, default:2.00 },
+  ];
+  if (type === 'linear')   return [base[0], { id:'accel', label:'Accel (gain/speed)', min:0.001, max:0.1, step:0.001, default:0.02 }, base[2], base[3]];
+  if (type === 'classic')  return [base[0], { id:'power', label:'Power', min:0.1, max:3.0, step:0.05, default:0.50 }, base[2], base[3]];
+  if (type === 'power')    return [base[0], { id:'power', label:'Exponent', min:0.5, max:5.0, step:0.1, default:1.50 }, base[2], base[3]];
+  if (type === 'motivity') return [base[0], base[1], base[2], base[3]];
+  if (type === 'off')      return [base[0], { id:'ratio', label:'Y/X Ratio', min:0.5, max:1.5, step:0.01, default:1.00 }];
+  return base;
+}
+
+// ────── INIT ──────
+window.onload = () => {
+  initCharts();
+  renderMultCards();
+  renderParamSliders();
+  loadProfileList();
+  applyPreset('natural');
+  doConvert();
+  calcFromEdpi();
+  calcDpiEq();
+  initTracker();
+};
+
+// ────── CHARTS ──────
+function initCharts() {
+  mainChart = new Chart(document.getElementById('mainChart').getContext('2d'), {
+    type:'line',
+    data:{ datasets:[
+      { label:'Curve',    borderColor:'#a855f7', borderWidth:3, tension:0.3, pointRadius:0, fill:false },
+      { label:'Baseline', borderColor:'#10b981', borderDash:[4,3], borderWidth:1.5, pointRadius:0, fill:false },
+      { label:'Limit',    borderColor:'#ef4444', borderDash:[6,4], borderWidth:1.5, pointRadius:0, fill:false },
+      { label:'Eff. Sens',borderColor:'#06b6d4', borderDash:[2,3], borderWidth:1, pointRadius:0, fill:false },
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      animation:{ duration:120 },
+      scales:{
+        x:{ type:'linear', title:{display:true,text:'Input Speed (counts/ms)',color:'#64748b',font:{size:10}}, min:0, max:80, ticks:{color:'#64748b',font:{size:9}}, grid:{color:'#1a1a2a'} },
+        y:{ title:{display:true,text:'Output Multiplier',color:'#64748b',font:{size:10}}, min:0.8, max:4.5, ticks:{color:'#64748b',font:{size:9}}, grid:{color:'#1a1a2a'} }
+      },
+      plugins:{ legend:{display:false}, tooltip:{enabled:true, callbacks:{
+        label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(3)}`
+      }}}
+    }
+  });
+
+  cmpChart = new Chart(document.getElementById('compareChart').getContext('2d'), {
+    type:'line',
+    data:{ datasets:[
+      { label:'Curve A', borderColor:'#a855f7', borderWidth:2.5, tension:0.3, pointRadius:0, fill:false },
+      { label:'Curve B', borderColor:'#06b6d4', borderWidth:2.5, tension:0.3, pointRadius:0, fill:false, borderDash:[5,3] },
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      animation:{ duration:80 },
+      scales:{
+        x:{ type:'linear', min:0, max:80, ticks:{color:'#64748b',font:{size:9}}, grid:{color:'#1a1a2a'} },
+        y:{ min:0.8, max:4.5, ticks:{color:'#64748b',font:{size:9}}, grid:{color:'#1a1a2a'} }
+      },
+      plugins:{ legend:{display:true, labels:{color:'#94a3b8',font:{size:11}} }}
+    }
+  });
+}
+
+// ────── RENDER PARAM SLIDERS (dynamic per type) ──────
+function renderParamSliders() {
+  const defs = getSliderDefs(state.type);
+  const cont = document.getElementById('param-sliders');
+  cont.innerHTML = '';
+  defs.forEach(d => {
+    const wrap = document.createElement('div');
+    wrap.className = 'range-wrap';
+    wrap.innerHTML = `
+      <div class="range-header">
+        <span class="range-name">${d.label}</span>
+        <span class="range-val" id="val-${d.id}">${(state[d.id] ?? d.default).toFixed(d.step < 0.01 ? 3 : 2)}</span>
+      </div>
+      <input type="range" id="sl-${d.id}" min="${d.min}" max="${d.max}" step="${d.step}" value="${state[d.id] ?? d.default}" oninput="sliderInput('${d.id}',this)">
+    `;
+    cont.appendChild(wrap);
+  });
+  updateSliderFill();
+}
+
+function sliderInput(id, el) {
+  state[id] = parseFloat(el.value);
+  const val = document.getElementById(`val-${id}`);
+  if (val) val.textContent = state[id].toFixed(el.step < 0.01 ? 3 : 2);
+  state.preset = 'custom';
+  document.querySelectorAll('.pcard').forEach(c => c.classList.remove('sel'));
+  document.querySelector('.pcard[data-preset=custom]')?.classList.add('sel');
+  updateSliderFill();
+  onInput();
+}
+
+function updateSliderFill() {
+  document.querySelectorAll('input[type=range]').forEach(r => {
+    const pct = ((r.value - r.min) / (r.max - r.min)) * 100;
+    r.style.setProperty('--pct', pct + '%');
+  });
+}
+
+// ────── MULT CARDS ──────
+function renderMultCards() {
+  const mults = [
+    {name:'VERY LOW', val:0.75}, {name:'LOW', val:0.90},
+    {name:'BALANCED', val:1.00}, {name:'HIGH', val:1.15}, {name:'MAX', val:1.35}
+  ];
+  const c = document.getElementById('mult-cards');
+  c.innerHTML = '';
+  mults.forEach(m => {
+    const d = document.createElement('div');
+    d.className = 'mcard' + (Math.abs(m.val - state.mult) < 0.01 ? ' sel' : '');
+    d.innerHTML = `<div class="mcard-val">${m.val.toFixed(2)}</div><div class="mcard-name">${m.name}</div>`;
+    d.onclick = () => {
+      state.mult = m.val;
+      const sl = document.getElementById('sl-mult');
+      if (sl) { sl.value = m.val; document.getElementById('val-mult').textContent = m.val.toFixed(2); }
+      renderMultCards();
+      updateSliderFill();
+      onInput();
+    };
+    c.appendChild(d);
+  });
+}
+
+// ────── TYPE SELECTION ──────
+function selectType(el) {
+  document.querySelectorAll('.ct').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+  state.type = el.dataset.type;
+  document.getElementById('type-info').innerHTML = TYPE_INFO[state.type];
+  // Reset type-specific params
+  if (state.type === 'linear')  { state.accel = 0.02; }
+  if (state.type === 'classic' || state.type === 'power') { state.power = 0.50; }
+  renderParamSliders();
+  onInput();
+}
+
+// ────── PRESET SELECTION ──────
+function selectPreset(el) {
+  document.querySelectorAll('.pcard').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+  state.preset = el.dataset.preset;
+  applyPreset(state.preset);
+}
+
+function applyPreset(key) {
+  if (key === 'custom' || !PRESETS[key]) { onInput(); return; }
+
+  const base = {...PRESETS[key]};
+  // Apply tier adjustment
+  const edpi = state.dpi * state.sens;
+  const tier = edpi < TIER.low ? 'low' : edpi <= TIER.mid ? 'mid' : 'high';
+  const adj = TIER_ADJ[tier];
+  base.decay = Math.max(0.01, base.decay + adj.decay);
+  base.offset = Math.max(0, base.offset + adj.offset);
+  base.limit = Math.max(1.1, base.limit + adj.limit);
+
+  Object.assign(state, base);
+
+  // Sync sliders
+  ['mult','decay','offset','limit'].forEach(id => {
+    const sl = document.getElementById('sl-' + id);
+    if (sl) {
+      sl.value = state[id];
+      const v = document.getElementById('val-' + id);
+      if (v) v.textContent = state[id].toFixed(2);
+    }
+  });
+  const gainSel = document.getElementById('gain');
+  if (gainSel) gainSel.value = state.gain ? '1' : '0';
+
+  updateSliderFill();
+  onInput();
+}
+
+// ────── CURVE CALCULATION ──────
+function calcCurve(s) {
+  const pts = [];
+  for (let speed = 0; speed <= 80; speed += 0.5) {
+    const v = Math.max(0, speed - s.offset);
+    let m;
+    switch (s.type) {
+      case 'natural':
+        m = 1 + (s.limit - 1) * (1 - Math.exp(-s.decay * v));
+        break;
+      case 'linear':
+        m = Math.min(s.limit, 1 + (s.accel ?? 0.02) * v);
+        break;
+      case 'classic':
+        m = v > 0 ? Math.min(s.limit, Math.pow(v * (s.power ?? 0.5), 0.5) + 1) : 1;
+        break;
+      case 'power':
+        m = Math.min(s.limit, 1 + Math.pow(v * 0.1, s.power ?? 1.5));
+        break;
+      case 'motivity':
+        m = 1 + (s.limit - 1) * (1 - Math.exp(-s.decay * Math.pow(v, 1.15)));
+        break;
+      case 'off':
+        m = 1;
+        break;
+      default:
+        m = 1;
+    }
+    if (s.cap > 0) m = Math.min(m, s.cap);
+    pts.push({ x: speed, y: s.mult * m });
+  }
+  return pts;
+}
+
+// ────── MAIN UPDATE ──────
+function onInput() {
+  // Read base inputs
+  state.dpi = parseFloat(document.getElementById('dpi').value);
+  state.sens = parseFloat(document.getElementById('sens').value) || 0.18;
+  state.game = document.getElementById('game').value;
+  state.polling = parseFloat(document.getElementById('polling').value);
+
+  // Advanced
+  const ratioEl = document.getElementById('ratio');
+  if (ratioEl) state.ratio = parseFloat(ratioEl.value);
+  const rotEl = document.getElementById('rot');
+  if (rotEl) state.rot = parseFloat(rotEl.value);
+  const gainEl = document.getElementById('gain');
+  if (gainEl) state.gain = gainEl.value === '1' ? 1 : 0;
+  const capEl = document.getElementById('cap');
+  if (capEl) state.cap = parseFloat(capEl.value) || 0;
+
+  // Read slider states
+  ['mult','decay','offset','limit','accel','power'].forEach(id => {
+    const sl = document.getElementById('sl-' + id);
+    if (sl) state[id] = parseFloat(sl.value);
+  });
+
+  // Derived
+  const edpi = state.dpi * state.sens;
+  const tier = edpi < TIER.low ? 'low' : edpi <= TIER.mid ? 'mid' : 'high';
+  const tierLabel = { low:'LOW SENS', mid:'MID SENS', high:'HIGH SENS' }[tier];
+  const tierClass = { low:'tier-low', mid:'tier-mid', high:'tier-high' }[tier];
+  const gameMult = GAME_MULT[state.game] || 0.07;
+  const cm360 = (360 / (state.dpi * state.sens * gameMult)) * 2.54;
+
+  // Update displays
+  document.getElementById('disp-sens').textContent = state.sens.toFixed(3);
+  document.getElementById('disp-dpi').textContent = state.dpi;
+  document.getElementById('disp-edpi').textContent = Math.round(edpi);
+  document.getElementById('cm360-val').textContent = cm360.toFixed(1);
+
+  const badge = document.getElementById('tier-badge');
+  badge.className = `tier-badge ${tierClass}`;
+  badge.innerHTML = `<span class="tier-dot"></span>${tierLabel} — curve auto-tuned`;
+
+  // Update val displays for sliders
+  document.querySelectorAll('input[type=range]').forEach(r => {
+    const id = r.id.replace('sl-','');
+    const v = document.getElementById('val-' + id);
+    if (v) v.textContent = parseFloat(r.value).toFixed(r.step < 0.01 ? 3 : 2);
+  });
+  const vr = document.getElementById('val-ratio');
+  if (vr && ratioEl) vr.textContent = parseFloat(ratioEl.value).toFixed(2);
+  const vrot = document.getElementById('val-rot');
+  if (vrot && rotEl) vrot.textContent = parseFloat(rotEl.value).toFixed(1);
+
+  updateSliderFill();
+  renderMultCards();
+  updateChart();
+  updateLiveMetrics(edpi, cm360, tier);
+  updateConfigOutput();
+  updateCompareA();
+}
+
+function updateChart() {
+  const curveData = calcCurve(state);
+  const N = curveData.length;
+  const labels = curveData.map(p => p.x);
+
+  mainChart.data.datasets[0].data = curveData;
+  mainChart.data.datasets[1].data = curveData.map(p => ({ x:p.x, y:state.mult }));
+  mainChart.data.datasets[2].data = curveData.map(p => ({ x:p.x, y:state.mult * state.limit }));
+  mainChart.data.datasets[3].data = curveData.map(p => ({ x:p.x, y:state.mult * state.sens / 0.18 }));
+  mainChart.update('none');
+
+  // Compare chart curve A
+  if (cmpChart) {
+    cmpChart.data.datasets[0].data = curveData;
+    cmpChart.update('none');
+  }
+}
+
+function updateLiveMetrics(edpi, cm360, tier) {
+  const slowMult = state.mult.toFixed(2);
+  const fastMult = (state.mult * state.limit).toFixed(2);
+  const slowCm = cm360.toFixed(1);
+  const fastCm = (cm360 / state.limit).toFixed(1);
+  const onsetSpeed = state.offset.toFixed(1);
+
+  document.getElementById('live-metrics').innerHTML = `
+    <div class="cfg-row"><span class="cfg-key">Slow-move mult</span><span class="cfg-val">${slowMult}×</span></div>
+    <div class="cfg-row"><span class="cfg-key">Fast-flick mult</span><span class="cfg-val">${fastMult}×</span></div>
+    <div class="cfg-row"><span class="cfg-key">cm/360° (slow)</span><span class="cfg-val">${slowCm} cm</span></div>
+    <div class="cfg-row"><span class="cfg-key">cm/360° (fast)</span><span class="cfg-val">${fastCm} cm</span></div>
+    <div class="cfg-row"><span class="cfg-key">Accel onset (ct/ms)</span><span class="cfg-val">${onsetSpeed}</span></div>
+    <div class="cfg-row"><span class="cfg-key">Polling rate</span><span class="cfg-val">${state.polling} Hz</span></div>
+    <div class="cfg-row"><span class="cfg-key">Sens tier</span><span class="cfg-val">${tier.toUpperCase()}</span></div>
+    <div class="cfg-row"><span class="cfg-key">eDPI</span><span class="cfg-val">${Math.round(edpi)}</span></div>
+  `;
+}
+
+// ────── CONFIG OUTPUT ──────
+function buildConfigText() {
+  const edpi = Math.round(state.dpi * state.sens);
+  const tier = edpi < TIER.low ? 'LOW SENS' : edpi <= TIER.mid ? 'MID SENS' : 'HIGH SENS';
+  const gameName = { val:'Valorant', cs2:'CS2', apex:'Apex Legends', ow2:'Overwatch 2', r6:'Rainbow Six Siege', other:'Other' }[state.game];
+  const presetName = document.querySelector('.pcard.sel')?.querySelector('.pcard-name')?.textContent || 'Custom';
+  const typeName = state.type.charAt(0).toUpperCase() + state.type.slice(1);
+
+  const params = buildTypeParams();
+  return `; ═══════════════════════════════════════════
+; Raw Accel Config — ${typeName} Mode
+; Game: ${gameName}  |  ${tier} (${edpi} eDPI)
+; Preset: ${presetName}
+; Generated: ${new Date().toLocaleDateString()}
+; ═══════════════════════════════════════════
+
+[${typeName}]
+Sens Multiplier = ${state.mult.toFixed(2)}
+Y/X Ratio = ${state.ratio.toFixed(2)}
+Rotation = ${state.rot.toFixed(1)}
+${params}
+; ─── Advanced ───
+Gain = ${state.gain}${state.cap > 0 ? `\nOutput Cap = ${state.cap.toFixed(2)}` : ''}
+
+; ─── Notes ───
+; Accel Type   : ${typeName}
+; Input DPI    : ${state.dpi}
+; In-game Sens : ${state.sens}
+; Polling Rate : ${state.polling} Hz`;
+}
+
+function buildTypeParams() {
+  switch (state.type) {
+    case 'natural': case 'motivity':
+      return `Decay Rate = ${state.decay.toFixed(2)}\nInput Offset = ${state.offset.toFixed(1)}\nLimit = ${state.limit.toFixed(2)}`;
+    case 'linear':
+      return `Acceleration = ${(state.accel ?? 0.02).toFixed(3)}\nInput Offset = ${state.offset.toFixed(1)}\nLimit = ${state.limit.toFixed(2)}`;
+    case 'classic': case 'power':
+      return `Power = ${(state.power ?? 0.5).toFixed(2)}\nInput Offset = ${state.offset.toFixed(1)}\nLimit = ${state.limit.toFixed(2)}`;
+    case 'off':
+      return '; No acceleration parameters';
+    default:
+      return '';
+  }
+}
+
+function updateConfigOutput() {
+  const text = buildConfigText();
+  const html = text
+    .replace(/^(;.*)$/gm, '<span class="c">$1</span>')
+    .replace(/^(\w[^=\n]+=)(.*)$/gm, '<span class="k">$1</span><span class="v">$2</span>')
+    .replace(/^\[(.+)\]$/gm, '<span style="color:#f59e0b;font-weight:700">[$1]</span>');
+  document.getElementById('config-output').innerHTML = html;
+  document.getElementById('json-output').textContent = JSON.stringify(getStateSnapshot(), null, 2);
+}
+
+function getStateSnapshot() {
+  return {
+    game: state.game, dpi: state.dpi, sens: state.sens, polling: state.polling,
+    type: state.type, preset: state.preset,
+    mult: state.mult, decay: state.decay, offset: state.offset, limit: state.limit,
+    gain: state.gain, ratio: state.ratio, rot: state.rot, cap: state.cap,
+    accel: state.accel, power: state.power,
+    edpi: Math.round(state.dpi * state.sens)
+  };
+}
+
+// ────── COPY / DOWNLOAD ──────
+function copyConfig() {
+  navigator.clipboard.writeText(buildConfigText()).then(() => notify('Config copied to clipboard!'));
+}
+function copyJSON() {
+  navigator.clipboard.writeText(JSON.stringify(getStateSnapshot(), null, 2)).then(() => notify('JSON copied!'));
+}
+function downloadConfig() {
+  download('rawaccel_config.ini', buildConfigText(), 'text/plain');
+}
+function downloadJSON() {
+  download('rawaccel_config.json', JSON.stringify(getStateSnapshot(), null, 2), 'application/json');
+}
+function download(filename, text, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], {type}));
+  a.download = filename;
+  a.click();
+}
+
+// ────── RESET ──────
+function resetAll() {
+  document.getElementById('dpi').value = '1600';
+  document.getElementById('sens').value = '0.18';
+  document.getElementById('game').value = 'val';
+  document.getElementById('polling').value = '1000';
+  state.type = 'natural';
+  document.querySelectorAll('.ct').forEach(c => c.classList.remove('sel'));
+  document.querySelector('.ct[data-type=natural]').classList.add('sel');
+  document.getElementById('type-info').innerHTML = TYPE_INFO['natural'];
+  renderParamSliders();
+  selectPreset(document.querySelector('.pcard[data-preset=natural]'));
+  notify('Reset to defaults');
+}
+
+// ────── ADV TOGGLE ──────
+function toggleAdv() {
+  state.advOpen = !state.advOpen;
+  const s = document.getElementById('adv-section');
+  s.style.display = state.advOpen ? 'flex' : 'none';
+  document.getElementById('adv-label').textContent = state.advOpen ? 'Advanced ▼' : 'Advanced ▶';
+}
+
+// ────── TABS ──────
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  setTimeout(() => {
+    mainChart.resize();
+    cmpChart.resize();
+    if (trackerHistChart) trackerHistChart.resize();
+  }, 50);
+}
+
+// ────── COMPARE ──────
+function updateCompareA() {
+  const s = state;
+  document.getElementById('compare-a').innerHTML =
+    `Type: ${s.type}<br>Preset: ${s.preset}<br>Mult: ${s.mult.toFixed(2)}<br>Decay: ${s.decay?.toFixed(2) ?? '—'}<br>Offset: ${s.offset?.toFixed(1) ?? '—'}<br>Limit: ${s.limit?.toFixed(2) ?? '—'}<br>eDPI: ${Math.round(s.dpi * s.sens)}`;
+}
+
+function takeSnapshotB() {
+  snapshotB = getStateSnapshot();
+  const b = snapshotB;
+  document.getElementById('compare-b').innerHTML =
+    `Type: ${b.type}<br>Preset: ${b.preset}<br>Mult: ${b.mult.toFixed(2)}<br>Decay: ${b.decay?.toFixed(2) ?? '—'}<br>Offset: ${b.offset?.toFixed(1) ?? '—'}<br>Limit: ${b.limit?.toFixed(2) ?? '—'}<br>eDPI: ${b.edpi}`;
+  // Draw snapshot curve on compare chart
+  const bData = calcCurve({...b, offset: b.offset ?? 0, limit: b.limit ?? 2, cap: b.cap ?? 0});
+  cmpChart.data.datasets[1].data = bData;
+  cmpChart.update();
+  notify('Snapshot saved as Curve B');
+}
+
+// ────── CONVERTER ──────
+const CONV_MULT = { val:0.07, cs2:0.022, apex:0.022, ow2:0.0066 };
+
+function doConvert() {
+  const from = document.getElementById('conv-from').value;
+  const to = document.getElementById('conv-to').value;
+  const s = parseFloat(document.getElementById('conv-sens').value) || 0;
+  const dpi = parseFloat(document.getElementById('conv-dpi').value);
+
+  const fromDeg = s * CONV_MULT[from];
+  const toSens = fromDeg / CONV_MULT[to];
+  const cm360 = (360 / (dpi * s * CONV_MULT[from])) * 2.54;
+
+  document.getElementById('conv-result').textContent = toSens.toFixed(4);
+  document.getElementById('conv-cm').textContent = cm360.toFixed(1) + ' cm';
+}
+
+function calcFromEdpi() {
+  const edpi = parseFloat(document.getElementById('target-edpi').value) || 0;
+  const dpi = parseFloat(document.getElementById('edpi-dpi').value);
+  const s = edpi / dpi;
+  document.getElementById('edpi-result').textContent = s.toFixed(4);
+  document.getElementById('edpi-verify').textContent = Math.round(s * dpi);
+}
+
+function calcDpiEq() {
+  const fromDpi = parseFloat(document.getElementById('dpi-from').value);
+  const toDpi = parseFloat(document.getElementById('dpi-to').value);
+  const s = parseFloat(document.getElementById('dpi-sens').value) || 0;
+  const newSens = s * (fromDpi / toDpi);
+  document.getElementById('dpi-result').textContent = newSens.toFixed(4);
+}
+
+// ────── PROFILES ──────
+function saveProfile() {
+  const name = document.getElementById('profile-name').value.trim() ||
+    `Profile ${savedProfiles.length + 1}`;
+  const snap = { ...getStateSnapshot(), name, savedAt: new Date().toISOString() };
+  savedProfiles.push(snap);
+  localStorage.setItem('ra_profiles', JSON.stringify(savedProfiles));
+  document.getElementById('profile-name').value = '';
+  loadProfileList();
+  notify(`Profile "${name}" saved!`);
+}
+
+function loadProfile(idx) {
+  const p = savedProfiles[idx];
+  if (!p) return;
+  Object.assign(state, p);
+  // Sync UI
+  document.getElementById('dpi').value = p.dpi;
+  document.getElementById('sens').value = p.sens;
+  document.getElementById('game').value = p.game || 'val';
+  document.getElementById('polling').value = p.polling || 1000;
+  // Type
+  document.querySelectorAll('.ct').forEach(c => c.classList.remove('sel'));
+  document.querySelector(`.ct[data-type=${p.type || 'natural'}]`)?.classList.add('sel');
+  document.getElementById('type-info').innerHTML = TYPE_INFO[p.type || 'natural'];
+  // Preset
+  document.querySelectorAll('.pcard').forEach(c => c.classList.remove('sel'));
+  document.querySelector(`.pcard[data-preset=${p.preset || 'custom'}]`)?.classList.add('sel');
+  // Rebuild sliders
+  renderParamSliders();
+  ['mult','decay','offset','limit'].forEach(id => {
+    const sl = document.getElementById('sl-' + id);
+    if (sl && p[id] !== undefined) {
+      sl.value = p[id];
+      const v = document.getElementById('val-' + id);
+      if (v) v.textContent = parseFloat(p[id]).toFixed(2);
+    }
+  });
+  updateSliderFill();
+  onInput();
+  notify(`Loaded "${p.name}"`);
+}
+
+function deleteProfile(idx) {
+  savedProfiles.splice(idx, 1);
+  localStorage.setItem('ra_profiles', JSON.stringify(savedProfiles));
+  loadProfileList();
+  notify('Profile deleted');
+}
+
+function clearProfiles() {
+  if (!confirm('Clear all saved profiles?')) return;
+  savedProfiles = [];
+  localStorage.setItem('ra_profiles', JSON.stringify(savedProfiles));
+  loadProfileList();
+}
+
+function loadProfileList() {
+  const list = document.getElementById('profile-list');
+  if (!savedProfiles.length) {
+    list.innerHTML = '<div style="font-size:11px;color:var(--text3);text-align:center;padding:20px;">No saved profiles yet.<br>Set up your curve and click Save Profile.</div>';
+    return;
+  }
+  list.innerHTML = '';
+  savedProfiles.forEach((p, i) => {
+    const div = document.createElement('div');
+    div.className = 'saved-item';
+    div.innerHTML = `
+      <div>
+        <div class="saved-name">${p.name}</div>
+        <div class="saved-meta">${p.type} · ${p.preset} · eDPI ${p.edpi} · ${new Date(p.savedAt).toLocaleDateString()}</div>
+      </div>
+      <div class="saved-actions">
+        <button class="icon-btn" onclick="loadProfile(${i})">Load</button>
+        <button class="icon-btn del" onclick="deleteProfile(${i})">✕</button>
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function exportProfiles() {
+  download('rawaccel_profiles.json', JSON.stringify(savedProfiles, null, 2), 'application/json');
+}
+function importProfiles() {
+  document.getElementById('import-file').click();
+}
+function handleImport(e) {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (Array.isArray(data)) {
+        savedProfiles = [...savedProfiles, ...data];
+        localStorage.setItem('ra_profiles', JSON.stringify(savedProfiles));
+        loadProfileList();
+        notify(`Imported ${data.length} profile(s)`);
+      }
+    } catch { notify('Import failed — invalid JSON'); }
+  };
+  r.readAsText(f);
+}
+
+// ────── MOUSE TRACKER ──────
+let trackerActive = false;
+let trackerSamples = [];
+let trackerPeak = 0;
+let trackerLastPos = null;
+let trackerLastTime = null;
+let trackerHistChart = null;
+let trackerSuggestion = null;
+let trackerAnimFrame = null;
+let trackerTrails = [];
+
+function initTracker() {
+  const zone = document.getElementById('tracker-zone');
+  const canvas = document.getElementById('tracker-canvas');
+  const dot = document.getElementById('tracker-dot');
+
+  function resizeCanvas() {
+    canvas.width = zone.offsetWidth;
+    canvas.height = zone.offsetHeight;
+  }
+  resizeCanvas();
+
+  zone.addEventListener('mouseenter', () => {
+    trackerActive = true;
+    zone.classList.add('active');
+    dot.style.display = 'block';
+    resizeCanvas();
+  });
+  zone.addEventListener('mouseleave', () => {
+    trackerActive = false;
+    zone.classList.remove('active');
+    dot.style.display = 'none';
+    trackerLastPos = null;
+    trackerLastTime = null;
+    if (trackerSamples.length > 10) analyzeAndSuggest();
+  });
+
+  zone.addEventListener('mousemove', (e) => {
+    if (!trackerActive) return;
+    const rect = zone.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    dot.style.left = x + 'px';
+    dot.style.top = y + 'px';
+
+    const now = performance.now();
+    if (trackerLastPos && trackerLastTime) {
+      const dt = now - trackerLastTime;
+      if (dt > 0 && dt < 200) {
+        const dx = x - trackerLastPos.x;
+        const dy = y - trackerLastPos.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        const dpi = state.dpi;
+        const polling = state.polling || 1000;
+        const countsPerPx = dpi / 96;
+        const dtMs = dt;
+        const speed = (dist * countsPerPx) / dtMs;
+
+        if (speed > 0.01 && speed < 300) {
+          trackerSamples.push(speed);
+          if (speed > trackerPeak) trackerPeak = speed;
+
+          trackerTrails.push({ x, y, speed, age: 0 });
+          if (trackerTrails.length > 60) trackerTrails.shift();
+
+          const speedColor = speed < 5 ? '#10b981' : speed < 20 ? '#a855f7' : speed < 50 ? '#f59e0b' : '#ef4444';
+          dot.style.background = speedColor;
+
+          updateTrackerStats();
+          updateTrackerHistogram();
+          drawTrackerCanvas();
+        }
+      }
+    }
+    trackerLastPos = { x, y };
+    trackerLastTime = now;
+  });
+
+  initTrackerHistogram();
+}
+
+function drawTrackerCanvas() {
+  const canvas = document.getElementById('tracker-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  trackerTrails.forEach((t, i) => {
+    const alpha = (i / trackerTrails.length) * 0.7;
+    const r = t.speed < 5 ? '16,185,129' : t.speed < 20 ? '168,85,247' : t.speed < 50 ? '245,158,11' : '239,68,68';
+    ctx.beginPath();
+    ctx.arc(t.x, t.y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${r},${alpha})`;
+    ctx.fill();
+    t.age++;
+  });
+  trackerTrails = trackerTrails.filter(t => t.age < 60);
+}
+
+function updateTrackerStats() {
+  const n = trackerSamples.length;
+  if (!n) return;
+  const avg = trackerSamples.reduce((a, b) => a + b, 0) / n;
+  const last = trackerSamples[n - 1];
+  document.getElementById('tr-avg').textContent = avg.toFixed(1);
+  document.getElementById('tr-peak').textContent = trackerPeak.toFixed(1);
+  document.getElementById('tr-samples').textContent = n;
+  document.getElementById('tr-live').textContent = last.toFixed(1);
+}
+
+function initTrackerHistogram() {
+  const ctx = document.getElementById('tracker-hist').getContext('2d');
+  trackerHistChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: [],
+      datasets: [
+        {
+          label: 'Speed Distribution',
+          data: [],
+          backgroundColor: 'rgba(6,182,212,0.35)',
+          borderColor: 'rgba(6,182,212,0.7)',
+          borderWidth: 1,
+          yAxisID: 'y2',
+          order: 2,
+        },
+        {
+          label: 'Accel Curve',
+          data: [],
+          type: 'line',
+          borderColor: '#a855f7',
+          borderWidth: 2.5,
+          pointRadius: 0,
+          tension: 0.3,
+          fill: false,
+          yAxisID: 'y',
+          order: 1,
+        },
+        {
+          label: 'Avg Speed',
+          data: [],
+          type: 'line',
+          borderColor: '#f59e0b',
+          borderWidth: 1.5,
+          borderDash: [4, 4],
+          pointRadius: 0,
+          fill: false,
+          yAxisID: 'y',
+          order: 0,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 60 },
+      scales: {
+        x: {
+          title: { display: true, text: 'Input Speed (counts/ms)', color: '#64748b', font: { size: 10 } },
+          ticks: { color: '#64748b', font: { size: 9 }, maxTicksLimit: 10 },
+          grid: { color: '#1a1a2a' }
+        },
+        y: {
+          title: { display: true, text: 'Output Multiplier', color: '#64748b', font: { size: 10 } },
+          min: 0.8, max: 4.0,
+          ticks: { color: '#64748b', font: { size: 9 } },
+          grid: { color: '#1a1a2a' },
+          position: 'left'
+        },
+        y2: {
+          title: { display: true, text: 'Sample Count', color: '#64748b', font: { size: 10 } },
+          ticks: { color: '#64748b', font: { size: 9 } },
+          grid: { display: false },
+          position: 'right'
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: true }
+      }
+    }
+  });
+}
+
+function updateTrackerHistogram() {
+  if (!trackerHistChart || trackerSamples.length < 2) return;
+
+  const maxBin = Math.min(Math.max(trackerPeak * 1.2, 30), 120);
+  const binCount = 24;
+  const binSize = maxBin / binCount;
+  const bins = new Array(binCount).fill(0);
+  trackerSamples.forEach(s => {
+    const idx = Math.min(Math.floor(s / binSize), binCount - 1);
+    bins[idx]++;
+  });
+
+  const labels = bins.map((_, i) => ((i + 0.5) * binSize).toFixed(1));
+
+  const curveData = labels.map(lbl => {
+    const speed = parseFloat(lbl);
+    const s = state;
+    const v = Math.max(0, speed - (s.offset || 0));
+    let mult = s.mult || 1;
+    if (s.type === 'natural' || !s.type) {
+      mult *= Math.min(1 + (s.limit - 1) * (1 - Math.exp(-(s.decay || 0.1) * v)), s.limit || 2);
+    } else if (s.type === 'linear') {
+      mult *= Math.min(1 + (s.accel || 0.02) * v, s.limit || 2);
+    } else {
+      mult *= Math.min(1 + (s.limit - 1) * (1 - Math.exp(-0.1 * v)), s.limit || 2);
+    }
+    return parseFloat(mult.toFixed(3));
+  });
+
+  const avg = trackerSamples.reduce((a, b) => a + b, 0) / trackerSamples.length;
+  const avgLineData = labels.map(lbl => {
+    const speed = parseFloat(lbl);
+    return Math.abs(speed - avg) < binSize * 0.6 ? 3.8 : null;
+  });
+
+  trackerHistChart.data.labels = labels;
+  trackerHistChart.data.datasets[0].data = bins;
+  trackerHistChart.data.datasets[1].data = curveData;
+  trackerHistChart.data.datasets[2].data = avgLineData;
+  trackerHistChart.update('none');
+}
+
+function analyzeAndSuggest() {
+  if (trackerSamples.length < 10) return;
+
+  const avg = trackerSamples.reduce((a, b) => a + b, 0) / trackerSamples.length;
+  const peak = trackerPeak;
+  const sorted = [...trackerSamples].sort((a, b) => a - b);
+  const p75 = sorted[Math.floor(sorted.length * 0.75)];
+  const p90 = sorted[Math.floor(sorted.length * 0.90)];
+
+  const newDecay = parseFloat(Math.max(0.03, Math.min(0.35, 1.5 / avg)).toFixed(2));
+  const newOffset = parseFloat(Math.max(0, Math.min(15, avg * 0.3)).toFixed(1));
+  const newLimit = parseFloat(Math.max(1.3, Math.min(3.8, peak / avg)).toFixed(2));
+
+  trackerSuggestion = { decay: newDecay, offset: newOffset, limit: newLimit };
+
+  const suggEl = document.getElementById('tracker-suggestion');
+  const contentEl = document.getElementById('suggestion-content');
+  suggEl.style.display = 'block';
+
+  const diffDecay = newDecay - (state.decay || 0.10);
+  const diffOffset = newOffset - (state.offset || 4);
+  const diffLimit = newLimit - (state.limit || 2.0);
+
+  const fmt = (v, unit) => v > 0 ? `<span style="color:var(--green)">+${v.toFixed(2)}${unit}</span>` : v < 0 ? `<span style="color:var(--red)">${v.toFixed(2)}${unit}</span>` : `<span style="color:var(--text3)">no change</span>`;
+
+  contentEl.innerHTML = `
+    <div style="margin-bottom:10px;">
+      <strong>Analysis:</strong> avg speed <span style="color:var(--accent3)">${avg.toFixed(1)}</span> cts/ms,
+      peak <span style="color:var(--orange)">${peak.toFixed(1)}</span> cts/ms,
+      p75 <span style="color:var(--cyan)">${p75.toFixed(1)}</span>, p90 <span style="color:var(--cyan)">${p90.toFixed(1)}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
+      <div style="background:#0a0a10;border:1px solid var(--border2);border-radius:6px;padding:8px;text-align:center;">
+        <div style="font-size:9px;color:var(--text3);letter-spacing:1px;margin-bottom:4px;">DECAY RATE</div>
+        <div style="font-size:16px;font-weight:700;color:#fff;font-family:'Rajdhani',sans-serif;">${newDecay}</div>
+        <div style="font-size:10px;margin-top:2px;">${fmt(diffDecay, '')}</div>
+      </div>
+      <div style="background:#0a0a10;border:1px solid var(--border2);border-radius:6px;padding:8px;text-align:center;">
+        <div style="font-size:9px;color:var(--text3);letter-spacing:1px;margin-bottom:4px;">INPUT OFFSET</div>
+        <div style="font-size:16px;font-weight:700;color:#fff;font-family:'Rajdhani',sans-serif;">${newOffset}</div>
+        <div style="font-size:10px;margin-top:2px;">${fmt(diffOffset, '')}</div>
+      </div>
+      <div style="background:#0a0a10;border:1px solid var(--border2);border-radius:6px;padding:8px;text-align:center;">
+        <div style="font-size:9px;color:var(--text3);letter-spacing:1px;margin-bottom:4px;">LIMIT</div>
+        <div style="font-size:16px;font-weight:700;color:#fff;font-family:'Rajdhani',sans-serif;">${newLimit}</div>
+        <div style="font-size:10px;margin-top:2px;">${fmt(diffLimit, '')}</div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--text2);line-height:1.7;">
+      ${avg < 8 ? '🎯 <strong>Low avg speed</strong> — offset tuned to keep slow micro-aim clean. Decay set gentle.' : avg < 20 ? '⚖️ <strong>Mid-range speed</strong> — balanced decay for smooth tracking-to-flick transitions.' : '⚡ <strong>High avg speed</strong> — faster decay onset to engage accel sooner. Limit raised for flick range.'}
+    </div>`;
+
+  document.getElementById('tracker-clear-row').style.display = 'none';
+}
+
+function applyTrackerSuggestion() {
+  if (!trackerSuggestion) return;
+  state.decay = trackerSuggestion.decay;
+  state.offset = trackerSuggestion.offset;
+  state.limit = trackerSuggestion.limit;
+  state.preset = 'custom';
+
+  const slDecay = document.getElementById('sl-decay');
+  const slOffset = document.getElementById('sl-offset');
+  const slLimit = document.getElementById('sl-limit');
+  if (slDecay) { slDecay.value = state.decay; document.getElementById('val-decay').textContent = state.decay.toFixed(2); }
+  if (slOffset) { slOffset.value = state.offset; document.getElementById('val-offset').textContent = state.offset.toFixed(2); }
+  if (slLimit) { slLimit.value = state.limit; document.getElementById('val-limit').textContent = state.limit.toFixed(2); }
+  document.querySelectorAll('.pcard').forEach(c => c.classList.remove('sel'));
+  document.querySelector('.pcard[data-preset=custom]')?.classList.add('sel');
+  updateSliderFill();
+  onInput();
+  notify('Tracker suggestion applied! Check Curve tab.');
+  updateTrackerHistogram();
+}
+
+function clearTracker() {
+  trackerSamples = [];
+  trackerPeak = 0;
+  trackerLastPos = null;
+  trackerLastTime = null;
+  trackerTrails = [];
+  trackerSuggestion = null;
+  document.getElementById('tr-avg').textContent = '—';
+  document.getElementById('tr-peak').textContent = '—';
+  document.getElementById('tr-samples').textContent = '0';
+  document.getElementById('tr-live').textContent = '0';
+  document.getElementById('tracker-suggestion').style.display = 'none';
+  document.getElementById('tracker-clear-row').style.display = 'flex';
+  const canvas = document.getElementById('tracker-canvas');
+  if (canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+  if (trackerHistChart) {
+    trackerHistChart.data.labels = [];
+    trackerHistChart.data.datasets.forEach(d => d.data = []);
+    trackerHistChart.update();
+  }
+}
+
+// ────── NOTIFY FUNCTION ──────
+function notify(msg) {
+  const n = document.getElementById('notif');
+  if (!n) return;
+  document.getElementById('notif-msg').textContent = msg;
+  n.classList.add('show');
+  setTimeout(() => n.classList.remove('show'), 2400);
+}
+
+// ────── FINAL INITIALIZATION ──────
+document.getElementById('type-info').innerHTML = TYPE_INFO['natural'];
+
+</script>
+</body>
+</html>
